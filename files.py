@@ -22,14 +22,28 @@ def getArguments():
             elif "--targetFolder" in argument:
                 targetFolder = argument.split("=")[1]
 
-        print(sourceFolder)
-        print(targetFolder)
         
         assert(os.path.isdir(sourceFolder))
         assert(os.path.isdir(targetFolder))
+
+        if (sourceFolder == targetFolder):
+            print("Both paths are same.")
+            raise Exception()
+
+        return sourceFolder, targetFolder
 
     except:
         raise Exception("Check the arguments supplied.")
 
 
-getArguments()
+sourceFolder, targetFolder = getArguments()
+print(sourceFolder)
+print(targetFolder)
+
+
+def moveFiles(sourceFolder, targetFolder):
+    for path, subdirs, files in os.walk(sourceFolder):
+        for name in files:
+            print(os.path.join(path, name))
+
+moveFiles(sourceFolder, targetFolder)
