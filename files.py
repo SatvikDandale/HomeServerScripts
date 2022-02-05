@@ -36,14 +36,17 @@ def getArguments():
         raise Exception("Check the arguments supplied.")
 
 
-sourceFolder, targetFolder = getArguments()
-print(sourceFolder)
-print(targetFolder)
-
-
-def moveFiles(sourceFolder, targetFolder):
+def getAllFiles(sourceFolder):
+    filesArray = []
+    print("=== Generating a list of all the files in the source folder. ===")
     for path, subdirs, files in os.walk(sourceFolder):
         for name in files:
-            print(os.path.join(path, name))
+            # print(os.path.join(path, name))
+            filesArray.append(os.path.join(path, name))
+    print("=== The list is generated. ===")
+    print("=== Total number of files are: {}. ===".format(len(filesArray)))
+    return filesArray
 
-moveFiles(sourceFolder, targetFolder)
+sourceFolder, targetFolder = getArguments()
+filesArray = getAllFiles(sourceFolder)
+
