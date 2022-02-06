@@ -1,5 +1,10 @@
-import os, time, shutil, datetime, glob
-import getopt, sys
+import os
+import time
+import shutil
+import datetime
+import glob
+import getopt
+import sys
 
 """
     The command line arguments should include:
@@ -7,11 +12,12 @@ import getopt, sys
         2. The taget folder path
 """
 
+
 def getArguments():
     try:
         # The first argument is the current script file
         argumentList = sys.argv[1:]
-        print(argumentList)
+        # print(argumentList)
         assert len(argumentList) == 2
 
         sourceFolder = ""
@@ -22,7 +28,6 @@ def getArguments():
             elif "--targetFolder" in argument:
                 targetFolder = argument.split("=")[1]
 
-        
         assert(os.path.isdir(sourceFolder))
         assert(os.path.isdir(targetFolder))
 
@@ -47,6 +52,28 @@ def getAllFiles(sourceFolder):
     print("=== Total number of files are: {}. ===".format(len(filesArray)))
     return filesArray
 
+
+def createDirectory(path: str, name: str) -> str:
+    path += "/" + name
+    os.mkdir(path)
+    return path
+
+
+def convertDate(date: datetime.datetime):
+    conversion = {1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "May", 6: "Jun", 7: "Jul", 8: "Aug", 9: "Sep",
+                  10: "Oct", 11: "Nov", 12: "Dec"}
+    return (date.year, conversion[date.month], date.day)
+
+
+def getCreationDate(file: str):
+    date = datetime.datetime.fromtimestamp(os.path.getctime(file))
+    return convertDate(date)
+
+
+def getModifiedDate(file: str):
+    date = datetime.datetime.fromtimestamp(os.path.getmtime(file))
+    return convertDate(date)
+
+
 sourceFolder, targetFolder = getArguments()
 filesArray = getAllFiles(sourceFolder)
-
