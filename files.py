@@ -48,6 +48,7 @@ def getArguments():
     except:
         raise Exception("Check the arguments supplied.")
 
+
 def getAllFiles(sourceFolder):
     """
         Returns a filesArray which contains all the files in the given directory and all subdirs (recursively)
@@ -63,6 +64,7 @@ def getAllFiles(sourceFolder):
     print("=== Total number of files are: {}. ===".format(len(filesArray)))
     return filesArray
 
+
 def createDirectory(path: str) -> str:
     """
         It will simulate mkdir -p functionality
@@ -73,6 +75,7 @@ def createDirectory(path: str) -> str:
         print("=== The path {} already exists. ===".format(path))
     return path
 
+
 def convertDate(date: datetime.datetime):
     """
         Expects a datetime object
@@ -82,13 +85,16 @@ def convertDate(date: datetime.datetime):
                   10: "Oct", 11: "Nov", 12: "Dec"}
     return (str(date.year), conversion[date.month], date.day)
 
+
 def getCreationDate(file: str):
     date = datetime.datetime.fromtimestamp(os.path.getctime(file))
     return convertDate(date)
 
+
 def getModifiedDate(file: str):
     date = datetime.datetime.fromtimestamp(os.path.getmtime(file))
     return convertDate(date)
+
 
 def copyFile(sourceFile: str, destinationFile: str):
     """
@@ -96,6 +102,7 @@ def copyFile(sourceFile: str, destinationFile: str):
        desticationPath: complete path of file including the file name
     """
     shutil.copy2(sourceFile, destinationFile)
+
 
 def createCopyOfFile(sourceFile, destinationFile):
     """
@@ -111,14 +118,24 @@ def createCopyOfFile(sourceFile, destinationFile):
     if not os.path.isfile(destinationFile):
         copyFile(sourceFile, destinationFile)
     else:
-        destinationFile = os.path.splitext(destinationFile)[0] + str(copy) + os.path.splitext(destinationFile)[1]
+        destinationFile = os.path.splitext(destinationFile)[
+            0] + str(copy) + os.path.splitext(destinationFile)[1]
         return createCopyOfFile(sourceFile, destinationFile)
+
 
 def generateDestinationPath(fileName, modifiedDate, targetFolder):
     year = modifiedDate[0]
     month = modifiedDate[1]
     path = targetFolder + "/" + year + "/" + month + "/"
     return path
+
+def printDetails(percentProgress):
+    remaining = 100 - percentProgress
+    sys.stdout.write (
+        "\r[{0}] {1}%".format('#'*int(percentProgress) + ' '*int(remaining), percentProgress)
+    )
+    pass
+
 
 def differentialBackup():
     """
@@ -132,21 +149,29 @@ def differentialBackup():
                     If yes, then get the modification and creation dates of both.
                     Compare. If not equal, then recursively create a copy of this file.
     """
-    
+
     sourceFolder, targetFolder = getArguments()
     filesArray = getAllFiles(sourceFolder)
 
-    for file in filesArray:
+    totalFiles = len(filesArray)
+
+    for i in range(len(filesArray)):
+        file = filesArray[i]
         fileName = file[1]
         filePath = file[0]
         creationDate = getCreationDate(filePath)
         modifiedDate = getModifiedDate(filePath)
-        destinationPath = generateDestinationPath(fileName, modifiedDate, targetFolder)
+        destinationPath = generateDestinationPath(
+            fileName, modifiedDate, targetFolder)
         if not os.path.isdir(destinationPath):
             createDirectory(destinationPath)
         destinationFilePath = destinationPath + fileName
         createCopyOfFile(filePath, destinationFilePath)
-
-    pass
+        percent = ((i+1) / totalFiles) * 100
+        printDetails(percent)
+    
+    for x in range(75):
+        print('*' * (75 - x), x, end='\x1b[1K\r')
+    print("Done!")
 
 differentialBackup()
