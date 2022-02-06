@@ -1,4 +1,6 @@
+from genericpath import isfile
 from msilib.schema import File
+from operator import mod
 import os
 import time
 import shutil
@@ -61,10 +63,12 @@ def getAllFiles(sourceFolder):
     print("=== Total number of files are: {}. ===".format(len(filesArray)))
     return filesArray
 
-def createDirectory(path: str, name: str) -> str:
-    path += "/" + name
+def createDirectory(path: str) -> str:
+    """
+        It will simulate mkdir -p functionality
+    """
     try:
-        os.mkdir(path)
+        os.makedirs(path)
     except FileExistsError:
         print("=== The path {} already exists. ===".format(path))
     return path
@@ -76,7 +80,7 @@ def convertDate(date: datetime.datetime):
     """
     conversion = {1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "May", 6: "Jun", 7: "Jul", 8: "Aug", 9: "Sep",
                   10: "Oct", 11: "Nov", 12: "Dec"}
-    return (date.year, conversion[date.month], date.day)
+    return (str(date.year), conversion[date.month], date.day)
 
 def getCreationDate(file: str):
     date = datetime.datetime.fromtimestamp(os.path.getctime(file))
@@ -86,15 +90,63 @@ def getModifiedDate(file: str):
     date = datetime.datetime.fromtimestamp(os.path.getmtime(file))
     return convertDate(date)
 
-def copyFile(sourcePath: str, destinationPath: str, file: str):
+def copyFile(sourceFile: str, destinationFile: str):
     """
-       sourcePath: the path till the folder which contains the file. Not including the file name. 
-       desticationPath: the path till the folder in which the file is expected
-       file: just the file name
+       sourcePath: complete path of file including the file name
+       desticationPath: complete path of file including the file name
     """
-    shutil.copy2(file, destinationPath + "/" + file)
+    shutil.copy2(sourceFile, destinationFile)
 
-sourceFolder, targetFolder = getArguments()
-filesArray = getAllFiles(sourceFolder)
-# createDirectory(".", "test")
-# copyFile("./", "./test", "README.md")
+def createCopyOfFile(sourceFile, destinationFile):
+    """
+        Args:
+            sourceFile: /hdd/somefolder/a.txt
+            destinationFile: /backup/2011/Mar/a.txt
+
+        If a file a.txt already exists, and we have a newer file:
+            then check a1.txt exists. If not, create
+                else check a2.txt exists and so on.
+    """
+    copy = " copy "
+    if not os.path.isfile(destinationFile):
+        copyFile(sourceFile, destinationFile)
+    else:
+        destinationFile = os.path.splitext(destinationFile)[0] + str(copy) + os.path.splitext(destinationFile)[1]
+        return createCopyOfFile(sourceFile, destinationFile)
+
+def generateDestinationPath(fileName, modifiedDate, targetFolder):
+    year = modifiedDate[0]
+    month = modifiedDate[1]
+    path = targetFolder + "/" + year + "/" + month + "/"
+    return path
+
+def differentialBackup():
+    """
+        CURRENTLY SINGLE THREADED OPERATION
+        The steps are:
+            1. Get all the files in 1 array
+            2. For every file:
+                a. Get its creation and modification dates
+                b. Check if the destination directory exists or not. If not, then create
+                c. Check if the file already exists there:
+                    If yes, then get the modification and creation dates of both.
+                    Compare. If not equal, then recursively create a copy of this file.
+    """
+    
+    sourceFolder, targetFolder = getArguments()
+    filesArray = getAllFiles(sourceFolder)
+
+    for file in filesArray:
+        fileName = file[1]
+        filePath = file[0]
+        creationDate = getCreationDate(filePath)
+        modifiedDate = getModifiedDate(filePath)
+        destinationPath = generateDestinationPath(fileName, modifiedDate, targetFolder)
+        if not os.path.isdir(destinationPath):
+            createDirectory(destinationPath)
+        destinationFilePath = destinationPath + fileName
+        createCopyOfFile(filePath, destinationFilePath)
+
+    pass
+
+differentialBackup()
